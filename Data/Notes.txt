@@ -1,0 +1,117 @@
+﻿
+5//11/2023
+
+Geez! The notes from 4/20/2023 may already be out of data. Going forward I have decided that documentation needs to be done after the api is locked down.
+There is to much wasted effort in documenting things that are going to change. These notes will more general and to log details of things I learn along the way.
+
+Why use code generation? I am using code generation to reduce the amount of boiler plate code I have to write, as well as to create . I am using code generation to create the
+
+There is a saying: "If the only tool you have is a hammer, you tend to see every problem as a nail"
+
+When you start trying to use code generation to solve problems do not forget that you have other tools as well. I is easy to forget and start
+becareful not to see every 
+
+1: Regarding Code Generation: I need to be careful about putting to much code into the genertion. Put as much code as makes since in the base class. Always start
+with adding functionality to the base class. Only resort to codegenration when it makes since to do so.
+
+2: One of the concepts to remember about abstract base classes is that data defined as "static" is the base class is shared by all derived classes. I find that
+often I need static data from the derived class. The pattern I am using is to use code generation to define the static data and a property in the derived class.
+Of course this pattern us useful even if not using code generation. The code below shows the pattern:
+
+	Base Abstract Class:
+	
+	public abstract int[] GetStaticData { get ; }
+	public void DoSomething() \
+	{ 
+		var data = GetStaticData;
+		// Do something with data
+	}
+
+	Use code generation to create in the Derived Class:
+
+	public static int[] StaticData { get; } = new int[] { 1, 2, 3, 4, 5 };
+	public override int[] GetStaticData => StaticData;
+
+
+
+
+These are short general notes for things I need to remember or maybe someone else note are things I need to remember. I am using this file as a place to put notes that I
+
+
+
+I am trying to document the things
+
+
+
+4/20/2023: HOW TO USE WFData
+
+The WFData project is my Table, Record, and Data project. I would not call it a Database as it
+does not do many of the things a Database can do. You can think it as what I use instead of a
+Database. I will explain the advantages and disadvantages of this choice in a different
+document. 
+
+This project uses code generation to generate the Record and Data classes. My main goal for this
+project is to reduce the boiler plate code normally needed for dealing with data to a minimum.
+For details on the code generation approach I am using:
+
+https://github.com/dotnet/roslyn/blob/main/docs/features/incremental-generators.md
+
+I was almost done with my project when I found some limitations with code generation that
+I was not aware of. The limitations prevent me from creating a nuget package as I had intended.
+Instead this is how to use WFData:
+
+WFData will be a project on git hub. A develper who wants to use it, likey as part of
+the Wamfish Framework, can clone WFData to the local solution directory of their application. 
+The developer would then put their own Record and Data defs into their local copy of WFData. 
+I suggest creating a folder named "MyRecordDefs" and "MyDataDefs" to hold their classes.
+
+I will make sure not to name any folders in WFData with the first two characters "My". To keep 
+WFData updated with the latest changes the developer would pull the latest changes from git hub. 
+There should not be any conflicts if using the "My" folder naming convention.
+
+There is more to it than that, but that is the basic idea. I plan on creating youtube videos
+to describe the process in more detail. 
+
+---------------------------------------------------------------------------------------------------
+
+The limitations of code generation that I ran into are:
+
+The code generation process does not work well when the records defs were not in the same project
+as the source code that defines what a Record is. The compiler would work, and would compile the
+code, but Visual Studio and Visual Studio Code had issues with seeing the generated code. Placing
+the record defs with WFData solves that problem.
+
+---------------------------------------------------------------------------------------------------
+
+This project file below was a work around that also worked, but it was not ideal solution. I decided
+am not going to use this method, but I am leaving the .csproj file below for reference. It has some 
+interseting configuration settings that may be useful someday:
+
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net7.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>disable</Nullable>
+		<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+		<CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
+	</PropertyGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\WFData\WFData.csproj" />
+		<ProjectReference Include="..\WFLib\WFLib.csproj" />
+		<ProjectReference Include="..\WFDataCG\WFDataCG.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+	</ItemGroup>
+	<ItemGroup>
+		<GenFiles Include="Generated\**\*.cs" />
+	</ItemGroup>
+	<Target Name="GenFixBeforeBuild" BeforeTargets="BeforeBuild">
+		<Delete Files="@(GenFiles)" />
+		<ItemGroup>
+			<Compile Remove="@(GenFiles)" />
+		</ItemGroup>
+	</Target>
+	<Target Name="GenFixAfterBuild" BeforeTargets="AfterBuild">
+		<ItemGroup>
+			<Compile Include="@(Genfiles)" />
+		</ItemGroup>
+	</Target>
+</Project>
