@@ -23,7 +23,7 @@ public abstract class RecordUtil<R> where R : Record, new()
         using var context = RentContext(EditByID);
         return context.Read(rec, id);
     }
-    public static Status Add(R rec, bool useNextId = false, int EditByID = -2)
+    public static Status Add(R rec, bool useNextId = true, int EditByID = -2)
     {
         using var context = RentContext(EditByID);
         return context.Add(rec, useNextId);

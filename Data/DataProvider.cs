@@ -10,9 +10,9 @@ public class DataProvider<D> : IDataProvider<D> where D : Data, new()
     //Func<D> _factory;
     private readonly Dictionary<int, D> dataSource = new();
     static D staticData = new();
-    private D RentData()
+    public D RentData()
     {
-        return null;
+        return DataFactory<D>.Rent();
     }
     private DataProvider() 
     { 

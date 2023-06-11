@@ -6,6 +6,10 @@ public class RecordProvider<R> : IDataProvider<R> where R : Record, new()
     private RecordProvider() 
     { 
     }
+    public R RentData()
+    {
+        return RecordFactory<R>.Rent();
+    }
     public bool Read(R rec, int id)
     {
         if (Ctx.Read(rec, id) == Status.Ok)

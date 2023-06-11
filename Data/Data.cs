@@ -107,8 +107,18 @@ public abstract class Data : IDisposable
         });
     }
 
-
-
+    static Func<Data, string>[] HtmlHelpers = new Func<Data, string>[15];
+    public abstract Func<Data, string>[] StaticHtmlHelpers { get; }
+    public bool FieldHasHtmlHelper(int field)
+    {
+        if (field < 0 || field >= FieldCount) return false;
+        return StaticHtmlHelpers[field] != null;
+    }
+    public string FieldAsHtml(int field)
+    {
+        if (!FieldHasHtmlHelper(field)) return FieldAsString(field);
+        return StaticHtmlHelpers[field](this);
+    }
 
     public delegate bool ValidationFunc(Data data, int field, out string msg);
     public abstract List<ValidationFunc>[] StaticValidationFuncs { get; }

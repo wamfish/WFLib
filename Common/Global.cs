@@ -11,7 +11,7 @@ public enum COLORRANGE
     Lime, Red, Pink, Orange, DeepOrange, Purple, DeepPurple,
     Teal, Yellow, COUNT
 }
-public static class Global
+public static partial class Global
 {
     
 

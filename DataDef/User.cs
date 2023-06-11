@@ -1,5 +1,7 @@
+﻿//  Copyright (C) 2023 - Present John Roscoe Hamilton - All Rights Reserved
+//  You may use, distribute and modify this code under the terms of the MIT license.
+//  See the file License.txt in the root folder for full license details.
 namespace WFLib;
-//--Do Not Edit Start
 public enum UserRole { Guest, User, Admin, EditUser}
 public partial class RolesData : Data
 {
@@ -14,8 +16,8 @@ public partial class User : Record
     public string RecoverHash;
     public RolesData.DataField Roles;
 }
-public partial class User
-{
+public partial class User 
+{ 
     [X] public RSA RSA = null;
     public void Load()
     {
@@ -100,4 +102,3 @@ public partial class User
         }
     }
 }
-//--Do Not Edit End

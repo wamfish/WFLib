@@ -6,4 +6,5 @@ public interface IDataProvider<D> : IDisposable where D : Data, new()
     bool Add(D data);
     bool Update(D data);
     bool Delete(D data);
+    D RentData();
 }

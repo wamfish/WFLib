@@ -53,6 +53,10 @@ public class FieldEditCtx<D> : IDisposable where D : Data, new()
     {
         return data.FieldValidate(Field, out _ValidationMessage);
     }
+    public string AsHtml(D data)
+    {
+        return data.FieldAsHtml(Field);
+    }
     public string AsString(D data)
     {
         return data.FieldAsString(Field);
