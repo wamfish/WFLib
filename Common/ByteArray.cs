@@ -9,6 +9,25 @@ public class ByteArray
     {
         Clear();
     }
+    bool isSpecial = false;
+    /// <summary>
+    /// This is a special case method for the tunnel server.  It allows the server to use a buffer that is already allocated.
+    /// Do not use this method unless you know what you are doing, or at least treat it as a readonly ByteArray.
+    /// </summary>
+    /// <param name="buffer"></param>
+    /// <param name="offset"></param>
+    /// <param name="size"></param>
+    /// <returns></returns>
+    public static ByteArray RentSpecialReadonly(byte[] buffer, int offset, int size)
+    {
+        ByteArray ba = Rent();
+        ba.isSpecial = true;
+        ByteArrayPool.Return(ba.data);
+        ba.data = buffer;
+        ba.readIndex = offset;
+        ba.writeIndex = offset + size;
+        return ba;
+    }
     public static ByteArray Rent()
     {
         lock (baPool)
@@ -23,6 +42,12 @@ public class ByteArray
     }
     public void Return()
     {
+        if (isSpecial)
+        {
+            // We don't own the buffer, so don't return it to the pool.
+            data = ByteArrayPool.Empty;
+            isSpecial = false;
+        }
         Clear();
         lock (baPool)
         {
@@ -105,7 +130,7 @@ public class ByteArray
         Buffer.BlockCopy(src, srcPos, data, destPos, size);
         int newEnd = destPos + size;
         //this is line does not work for all possible
-        if (newEnd > writeIndex) writeIndex = destPos + size;
+        if (newEnd > writeIndex) writeIndex = newEnd;
     }
     /// <summary>
     /// Appends buffer to this ByteArray.

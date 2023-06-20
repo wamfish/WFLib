@@ -17,13 +17,15 @@ public static partial class Global
 
     public static readonly bool IsWebAssembly = System.Runtime.InteropServices.RuntimeInformation.RuntimeIdentifier.Contains("wasm");
 
-    public static void Log(string message)
+    public static bool Log(string message)
     {
         Logger.Message(message);
+        return true;
     }
-    public static void LogMessage(string message)
+    public static bool LogMessage(string message)
     {
         Logger.Message(message);
+        return true;
     }
     public static void LogException(Exception ex)
     {

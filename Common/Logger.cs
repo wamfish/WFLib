@@ -160,7 +160,7 @@ public sealed class Logger : ILogger
             if (dayOfYear > LogDayOfYear)
             {
                 LogDayOfYear = dayOfYear;
-                LogFilePath = Path.Combine(Directories.Logs, $"LOG{DateTime.UtcNow.AsString(DATETYPE.FileDate)}.txt");
+                LogFilePath = Path.Combine(Directories.Logs, $"LOG{DateTime.UtcNow.AsString(DATETYPE.FileDate)}{System.AppDomain.CurrentDomain.FriendlyName}.txt");
                 if (LogFile != null)
                 {
                     LogFile.Close();

@@ -45,8 +45,9 @@ public class Pool<T>
     /// The object will be pooled for reuse when disposed
     /// </summary>
     /// <returns> TestObjectPooling </returns>
-    public T Rent()
+    public T Rent(Func<T> newObjFuncArg=null)
     {
+        if (newObjFuncArg != null) newObjFunc = newObjFuncArg;
         T obj;
         lock (pool)
         {

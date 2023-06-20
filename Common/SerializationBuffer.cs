@@ -27,6 +27,14 @@ public class SerializationBuffer : IDisposable
         return myba;
     }
     byte[] reverse = new byte[64];
+    
+    public ByteArray SwapByteArray(ByteArray ba)
+    {
+        Clear();
+        var myba = buf;
+        buf = ba;
+        return myba;
+    }
     private SerializationBuffer()
     {
         buf = ByteArray.Rent();
@@ -44,6 +52,17 @@ public class SerializationBuffer : IDisposable
     {
         return pool.Rent();
     }
+
+    bool isSpecial = false;
+    ByteArray oldba = null;
+    public static SerializationBuffer RentSpecialReadonly(byte[] buffer, int offset, int size)
+    {
+        var sb = pool.Rent();
+        sb.isSpecial = true;
+        sb.oldba = sb.SwapByteArray(ByteArray.RentSpecialReadonly(buffer, offset, size));
+        return sb;
+    }
+
     /// <summary>
     /// 
     /// Use this to get a SerializationBuffer object with
@@ -92,6 +111,13 @@ public class SerializationBuffer : IDisposable
     public void Return() => Dispose();
     public void Dispose()
     {
+        if (isSpecial)
+        {
+            isSpecial = false;
+            var ba = SwapByteArray(oldba);
+            ba.Return();
+            oldba = null;
+        }
         buf.Clear();
         pool.Return(this);
     }
@@ -281,6 +307,18 @@ public class SerializationBuffer : IDisposable
         WriteSize(count);
         if (count > 0) buf.Write(data, offset, count);
     }
+    /// <summary>
+    /// Only useful when you are using SerializationBuffer to manipluate a byte[] manually.
+    /// This method breaks the SerializationBuffer abstraction and should be used with caution.
+    /// </summary>
+    /// <param name="data"></param>
+    /// <param name="offset"></param>
+    /// <param name="count"></param>
+    public void Append(byte[] data, int offset, int count)
+    {
+        buf.Write(data, offset, count);
+    }
+
     public void Write(byte[] data)
     {
         WriteSize(data.Length);
