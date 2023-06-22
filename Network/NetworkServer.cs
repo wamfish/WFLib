@@ -21,8 +21,13 @@ public class NetworkServer
     internal Dictionary<int, Client> clients = new Dictionary<int, Client>();
     internal string Name { get; private set; }
     public readonly int BufferSize;
-    public NetworkServer(string name, IPEndPoint serverEP, int bufferSize)
+    public readonly List<IPAddress> ValidIPs = new List<IPAddress>();
+    public NetworkServer(string name, IPEndPoint serverEP, int bufferSize, List<IPAddress> validIDs=null)
     {
+        if (validIDs != null)
+        {
+            ValidIPs.AddRange(validIDs);
+        }
         BufferSize = bufferSize;
         Name = name;
         _ServerEP = serverEP;
@@ -33,7 +38,7 @@ public class NetworkServer
         listenSocket = new Socket(ServerEP.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
         listenSocket.Bind(ServerEP);
         listenSocket.Listen(100);
-        listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
+        //listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
         listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveBuffer, BufferSize);
         listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendBuffer, BufferSize);
         acceptEventArg = new SocketAsyncEventArgs();
@@ -41,8 +46,18 @@ public class NetworkServer
         Log($"{Name} started on {ServerEP.Address}:{ServerEP.Port}");
         StartAccept();
     }
+    public void Stop()
+    {
+        listenSocket.Close();
+        Log($"{Name} stopped on {ServerEP.Address}:{ServerEP.Port}");
+    }
     void AcceptEventCompleted(object sender, SocketAsyncEventArgs e)
     {
+        if (e.SocketError != SocketError.Success)
+        {
+            LogError($"Accept error {acceptEventArg.SocketError}");
+            return;
+        }
         ProcessAccept();
         StartAccept();
     }
@@ -54,6 +69,11 @@ public class NetworkServer
             MaxClients.WaitOne();
             acceptEventArg.AcceptSocket = null;
             willRaiseEvent = listenSocket.AcceptAsync(acceptEventArg);
+            if (acceptEventArg.SocketError != SocketError.Success)
+            {
+                LogError($"Accept error {acceptEventArg.SocketError}");
+                return;
+            }
             if (!willRaiseEvent)
             {
                 ProcessAccept();
@@ -78,6 +98,31 @@ public class NetworkServer
     }
     private void ProcessAccept()
     {
+        if (acceptEventArg.SocketError != SocketError.Success) 
+        { 
+            LogError($"Accept error {acceptEventArg.SocketError}");
+            return;
+        }
+        if (ValidIPs != null && ValidIPs.Count > 0)
+        {
+            var ip = ((IPEndPoint)acceptEventArg.AcceptSocket.RemoteEndPoint).Address;
+            bool valid = false;
+            foreach (var validIP in ValidIPs)
+            {
+                if (ip.Equals(validIP)) 
+                {
+                    valid = true;
+                    break;
+                }
+            }
+            if (!valid)
+            {
+                LogWarning($"Blocked connection from {ip}");
+                acceptEventArg.AcceptSocket.Shutdown(SocketShutdown.Both);
+                acceptEventArg.AcceptSocket.Close();
+                return;
+            }
+        }
         Interlocked.Increment(ref _NumConnectedSockets);
         var client = Client.Rent((IPEndPoint)acceptEventArg.AcceptSocket.RemoteEndPoint,BufferSize);
         client.socket = acceptEventArg.AcceptSocket;

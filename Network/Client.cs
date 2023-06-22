@@ -8,12 +8,14 @@ public class Client
 {
     public event Action<Client, byte[], int, int> OnReceive;
     public event Action<Client> OnConnect;
+    public event Action<Client, SocketError> OnConnectError;
     public event Action<Client> OnAfterClose;
     public event Action<Client, int> OnSent;
     private void ClearEvents()
     {
         OnReceive = null;
         OnConnect = null;
+
         OnAfterClose = null;
         OnSent = null;
     }
@@ -34,9 +36,13 @@ public class Client
     
     public void Connect()
     {
-        if (socket != null) Close();        
+        if (socket != null)
+        {
+            LogError($"{Description} already connected");
+            return;
+        }
         socket = new Socket(ServerEP.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-        socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
+        //socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
         socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveBuffer, BufferSize);
         socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendBuffer, BufferSize);
         bool willRaiseEvent = socket.ConnectAsync(connectEventArgs);
@@ -66,7 +72,16 @@ public class Client
             StartRecieve();
             return;
         }
-        Close();
+        socket = null;
+        if (OnConnectError != null)
+        {
+            OnConnectError(this, e.SocketError);
+        }
+        else
+        {
+            LogError($"{Description} connect error: {e.SocketError}");
+        }
+        
     }
     private void ConnectCompleted(object sender, SocketAsyncEventArgs e)
     {
@@ -115,12 +130,24 @@ public class Client
         {
             if (!IsConnected)
             {
-                //LogError($"Client:{SessionID} not connected");
+                LogError($"Client:{SessionID} not connected");
                 return;
             }
             willRaiseEvent = socket.ReceiveAsync(readArgs.eventArgs);
             if (!willRaiseEvent)
             {
+                if (readArgs.eventArgs.SocketError != SocketError.Success)
+                {
+                    LogError($"Socket error: {readArgs.eventArgs.SocketError}");
+                    Close();
+                    return;
+                }
+                if (readArgs.eventArgs.BytesTransferred == 0)
+                {               
+                    LogError($"Socket closed: {readArgs.eventArgs.SocketError}");
+                    Close();
+                    return;
+                }
                 ProcessReceive(readArgs.eventArgs);
                 Init();
             }
@@ -148,17 +175,23 @@ public class Client
             args.Return();
             return;
         }
-        if (e.SocketError != SocketError.Success)
-        {
-            LogError($"Socket error: {e.SocketError} bytes transferred: {e.BytesTransferred} SessionId:{args.Client.SessionID}");
-            Close();
-        }
         args.Return();
-
-
     }
     void ReceiveCompleted(object sender, SocketAsyncEventArgs e)
     {
+
+        if (e.SocketError != SocketError.Success)
+        {
+            LogError($"Socket error: {e.SocketError} bytes transferred: {e.BytesTransferred}");
+            Close();
+            return;
+        }
+        if (e.BytesTransferred == 0)
+        {
+            LogError($"Socket closed: {e.SocketError}");
+            Close();
+            return;
+        }
         ProcessReceive(e);
         StartRecieve();
     }

@@ -1,4 +1,5 @@
 ﻿using SkiaSharp;
+using System.Diagnostics;
 using System.Drawing;
 using System.Net;
 using System.Net.Sockets;
@@ -18,12 +19,17 @@ public class TunnelClient
         tunnelClient = Client.Rent(tunnelEP,8192+8);
         tunnelClient.OnConnect += HandleOnTunnelConnected;
         tunnelClient.OnAfterClose += HandleOnTunnelClose;
+        tunnelClient.OnConnectError += HandleOnTunnelConnectError;
         tunnelClient.OnReceive += HandleOnTunnelReceive;
         tunnelClient.OnSent += HandleOnTunnelSent;
     }
-    public void Run()
+    public void Start()
     {
         tunnelClient.Connect();
+    }
+    public void Stop()
+    {
+        tunnelClient.Close();
     }
     void HandleOnTunnelConnected(Client client)
     {
@@ -34,17 +40,17 @@ public class TunnelClient
     }
     void HandleOnTunnelSent(Client client, int bytesSent)
     {
-        Log($"{client.Description} sent {bytesSent} bytes id: {client.SentId}");
+        Debug.Assert(Log($"{client.Description} sent {bytesSent} bytes id: {client.SentId}"));
     }
     void CloseSession(Client client, int sessionID)
     {
         if (clients.TryGetValue(sessionID, out var webClient))
         {
-            LogWarning($"{client.Description} recieved a close request for: {webClient.Description}");
+            Debug.Assert(LogWarning($"{client.Description} recieved a close request for: {webClient.Description}"));
             webClient.ClosedByTunnel = true;
             return;
         }
-        LogError($"{client.Description} recieved a close request for undefined session: {sessionID}");
+        Debug.Assert(LogError($"{client.Description} recieved a close request for undefined session: {sessionID}"));
 
     }
 
@@ -83,7 +89,7 @@ public class TunnelClient
             int packetSize = readBuffer.ReadInt();
             if (packetSize - 4 > readBuffer.BytesToRead)
             {
-                LogWarning($"{client.Description} received a partial packet");
+                Debug.Assert(LogWarning($"{client.Description} received a partial packet"));
                 return;
             }
             int sessionID = readBuffer.ReadInt();
@@ -94,7 +100,7 @@ public class TunnelClient
                 SwapBuffers();
                 return;
             }
-            Log($"{client.Description} received {size} bytes for {sessionID}");
+            Debug.Assert(Log($"{client.Description} received {size} bytes for {sessionID}"));
             if (clients.TryGetValue(sessionID, out var webClient))
             {
                 if (webClient.SessionID != sessionID)
@@ -124,6 +130,11 @@ public class TunnelClient
             }
         }
     }
+    void HandleOnTunnelConnectError(Client client, SocketError error)
+    {
+        LogError($"{client.Description} connect error: {error}");
+        Task.Run(()=>TunnelRestart());
+    }
     void HandleOnTunnelClose(Client client)
     {
         if (readBuffer.BytesToRead > 0)
@@ -135,14 +146,16 @@ public class TunnelClient
         swapBuffer.Return();
         swapBuffer = null;
         Log($"{client.Description} Closed");
-        while(tunnelClient.IsConnected == false)
-        {
-            Log($"Retry Connect in 10 secounds");
-            Task.Delay(1000 * 10).Wait();
-            if (tunnelClient.IsConnected) break;
-            Log("Attempting to reconnect");
-            tunnelClient.Connect();
-        }
+        Task.Run(() => TunnelRestart());
+    }
+    void TunnelRestart()
+    {
+        Log($"Retry Connect in 10 secounds");
+        Task.Delay(1000 * 10).Wait();
+        if (tunnelClient.IsConnected)
+            return;
+        Log("Attempting to reconnect");
+        tunnelClient.Connect();
     }
     void HandleOnWebServerClientConnect(Client c)
     {
@@ -156,7 +169,7 @@ public class TunnelClient
     }
     void HandleOnWebServerClientClose(Client client)
     {
-        LogWarning($"{client.Description} Closed");
+        Debug.Assert(LogWarning($"{client.Description} Closed"));
         using var sb = SerializationBuffer.Rent();
         sb.Write((int)12);
         sb.Write((int)-1);
@@ -165,13 +178,13 @@ public class TunnelClient
     }
     void HandleOnWebServerClientSent(Client client, int bytesSent)
     {
-        Log($"{client.Description} sent {bytesSent} bytes");
+        Debug.Assert(Log($"{client.Description} sent {bytesSent} bytes"));
     }
     void HandleOnWebServerClientReceive(Client client, byte[] buffer, int offset, int size)
     {
         if (tunnelClient != null && tunnelClient.IsConnected)
         {
-            Log($"{client.Description} recvieved {size} bytes");
+            Debug.Assert(Log($"{client.Description} recvieved {size} bytes"));
             using var sb = SerializationBuffer.Rent();
             sb.Write(size + 8);
             sb.Write(client.SessionID);

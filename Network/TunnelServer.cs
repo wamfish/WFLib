@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Diagnostics;
+using System.Net;
 using System.Net.Sockets;
 using WFLib;
 using static WFLib.Global;
@@ -10,9 +11,11 @@ public class TunnelServer
     NetworkServer tunnelServer;
     NetworkServer webBrowserServer;
     Client tunnelClient = null;
-    public TunnelServer(IPEndPoint tunnelEP, IPEndPoint webBrowserEP)
+    public TunnelServer(IPEndPoint tunnelEP, IPEndPoint webBrowserEP, IPAddress remoteAddress)
     {
-        tunnelServer = new NetworkServer("ts:",tunnelEP,8192+8);
+        List<IPAddress> valid = new List<IPAddress>();
+        valid.Add(remoteAddress);
+        tunnelServer = new NetworkServer("ts:",tunnelEP,8192+8,valid);
         tunnelServer.HandleConnection += TunnelConnected;
         webBrowserServer = new NetworkServer("wbs:",webBrowserEP,8192);
         webBrowserServer.HandleConnection += BrowserConnected;
@@ -47,7 +50,7 @@ public class TunnelServer
         };
         tunnelClient.OnSent += (c,bs) =>
         {
-            Log($"{c.Description} sent {bs} bytes");
+            Debug.Assert(Log($"{c.Description} sent {bs} bytes"));
         };
     }
     void CloseSession(Client client, int sessionID)
@@ -55,7 +58,7 @@ public class TunnelServer
         var wbc = webBrowserServer.GetClientById(sessionID);
         if (wbc != null)
         {
-            LogWarning($"{client.Description} recieved a close request for: {wbc.Description}");
+            Debug.Assert(LogWarning($"{client.Description} recieved a close request for: {wbc.Description}"));
             wbc.ClosedByTunnel = true;
             return;
         }
@@ -83,7 +86,7 @@ public class TunnelServer
             int packetSize = readBuffer.ReadInt();
             if (packetSize-4 > readBuffer.BytesToRead)
             {
-                LogWarning($"{client.Description} received a partial packet");
+                Debug.Assert(LogWarning($"{client.Description} received a partial packet"));
                 return;
             }
             int sessionID = readBuffer.ReadInt();
@@ -94,7 +97,7 @@ public class TunnelServer
                 SwapBuffers();
                 return;
             }
-            Log($"{client.Description} received {size} bytes for {sessionID}");
+            Debug.Assert(Log($"{client.Description} received {size} bytes for {sessionID}"));
             var wb = webBrowserServer.GetClientById(sessionID);
             if (wb.SessionID != sessionID)
                 LogError($"wb sessionID mismatch: {wb.SessionID} != {sessionID}");
@@ -115,7 +118,7 @@ public class TunnelServer
     public void BrowserConnected(Client client)
     {
         client.Description = $"wbs:[{client.SessionID}]";
-        Log($"{client.Description} connected to wb");
+        Debug.Assert(Log($"{client.Description} connected to wb"));
         client.OnReceive += FromBrowser;
         client.OnAfterClose += (c) =>
         {
@@ -124,18 +127,18 @@ public class TunnelServer
             sb.Write((int)-1);
             sb.Write(c.SessionID);
             tunnelClient?.Send(sb.Data,0,sb.BytesUsed);
-            LogWarning($"{c.Description} closed");
+            Debug.Assert(LogWarning($"{c.Description} closed"));
         };
         client.OnSent += (c,bs) =>
         {
-            Log($"{c.Description} sent {bs} bytes");
+            Debug.Assert(Log($"{c.Description} sent {bs} bytes"));
         };
     }
     public void FromBrowser(Client client, byte[] buffer, int offset, int size)
     {
         if (tunnelClient != null && tunnelClient.IsConnected)
         {
-            Log($"{client.Description} recieved {size} bytes");
+            Debug.Assert(Log($"{client.Description} recieved {size} bytes"));
             using var sb = SerializationBuffer.Rent();
             sb.Write(size+8);
             sb.Write(client.SessionID);
@@ -146,9 +149,14 @@ public class TunnelServer
         LogError($"{client.Description} is not connected, but recieved {size} bytes");
     }
 
-    public void Run()
+    public void Start()
     {
         tunnelServer.Start();
         webBrowserServer.Start();
+    }
+    public void Stop()
+    {
+        tunnelServer.Stop();
+        webBrowserServer.Stop();
     }
 }

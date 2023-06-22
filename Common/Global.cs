@@ -27,17 +27,20 @@ public static partial class Global
         Logger.Message(message);
         return true;
     }
-    public static void LogException(Exception ex)
+    public static bool LogException(Exception ex)
     {
         Logger.Exception(ex);
+        return true;
     }
-    public static void LogError(string error)
+    public static bool LogError(string error)
     {
         Logger.Error(error);
+        return true;
     }
-    public static void LogWarning(string msg)
+    public static bool LogWarning(string msg)
     {
         Logger.Warning(msg);
+        return true;
     }
     public const char LISTSEP = (char)1;
     public const char VALUESEP = (char)2;
