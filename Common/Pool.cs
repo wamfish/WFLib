@@ -36,7 +36,6 @@ public class Pool<T>
         newObjFunc = newObjFuncArg;
         var t = typeof(T);
         string name = t.GetFriendlyName();
-        Console.WriteLine($"Pool<{name}> created");
         stats = new(name, () => { return pool.Count; });
     }
     Queue<T> pool = new();
