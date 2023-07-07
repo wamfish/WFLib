@@ -1,9 +1,3 @@
-The WFLib folder and all of its sub folders contains the source code for the Wamfish Library. 
-All of the source code files for the Wamfish Library are licensed under the MIT License below.
-This library refrences several open source nuget packages that have their own licenses. 
-
-
-
 MIT License
 
 Copyright (c) 2023 John Roscoe Hamilton
