@@ -14,31 +14,37 @@ public enum COLORRANGE
 public static partial class Global
 {
     
-
     public static readonly bool IsWebAssembly = System.Runtime.InteropServices.RuntimeInformation.RuntimeIdentifier.Contains("wasm");
+
+    public static LogLevel GlobalLogLevel = LogLevel.Information;
 
     public static bool Log(string message)
     {
+        if (GlobalLogLevel > LogLevel.Information) return true;
         Logger.Message(message);
         return true;
     }
     public static bool LogMessage(string message)
     {
+        if (GlobalLogLevel > LogLevel.Information) return true;
         Logger.Message(message);
         return true;
     }
     public static bool LogException(Exception ex)
     {
+        if (GlobalLogLevel > LogLevel.Critical) return true;
         Logger.Exception(ex);
         return true;
     }
     public static bool LogError(string error)
     {
+        if (GlobalLogLevel > LogLevel.Error) return true;
         Logger.Error(error);
         return true;
     }
     public static bool LogWarning(string msg)
     {
+        if (GlobalLogLevel > LogLevel.Warning) return true;
         Logger.Warning(msg);
         return true;
     }

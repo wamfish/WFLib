@@ -16,9 +16,16 @@ public class SerializationBuffer : IDisposable
     public int BytesUsed => buf.BytesUsed;
     public void SetWriteIndex(int index) => buf.SetWriteIndex(index);
     public void SetReadIndex(int index) => buf.SetReadIndex(index);
-    public EndPoint ClientEndPoint;  // used in UdpServer to pass info
-    public int RequestSize;
-    public int RequestBytesRead;
+
+    #region network class vars
+    //UdpTunnel uses these:
+    public int  SeqNum;
+    public bool Acked;
+    public ushort ChannelID;
+    public int AckCheckCount;
+    #endregion
+
+
     public ByteArray GetBuf()
     {
         var myba = buf;
@@ -317,6 +324,11 @@ public class SerializationBuffer : IDisposable
     public void Append(byte[] data, int offset, int count)
     {
         buf.Write(data, offset, count);
+    }
+    public void Append(SerializationBuffer sb)
+    {
+
+        buf.Write(sb.data, sb.ReadIndex, sb.BytesToRead);
     }
 
     public void Write(byte[] data)

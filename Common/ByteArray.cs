@@ -2,7 +2,7 @@
 //  You may use, distribute and modify this code under the terms of the MIT license.
 //  See the file License.txt in the root folder for full license details.
 namespace WFLib;
-public class ByteArray
+public class ByteArray : IDisposable
 {
     static Queue<ByteArray> baPool = new Queue<ByteArray>();
     private ByteArray()
@@ -315,5 +315,10 @@ public class ByteArray
         writeIndex = index;
         if (writeIndex < readIndex)
             readIndex = writeIndex;
+    }
+
+    public void Dispose()
+    {
+        Return();
     }
 }

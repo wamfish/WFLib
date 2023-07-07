@@ -1,22 +1,27 @@
-﻿using SkiaSharp;
-using System.Diagnostics;
-using System.Drawing;
+﻿using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using WFLib;
 using static WFLib.Global;
 namespace WFLib.Network;
-public class TunnelClient
+
+// ToDo: I wanted to integrate UDPTunnel into TunnelClient. This currently is
+// is a copy of TunnelClient. I decided to stop work on this for now.  
+// I have more pressing issues to deal with. Do not use this code for now.
+
+public class WebServerTunnel
 {
     SerializationBuffer swapBuffer;
     SerializationBuffer readBuffer;
     Dictionary<int, Client> clients = new Dictionary<int, Client>();
+    
     public Client tunnelClient;
+
     IPEndPoint serverEP;
-    public TunnelClient(IPEndPoint tunnelEP, IPEndPoint serverEP)
+    public WebServerTunnel(IPEndPoint tunnelEP, IPEndPoint serverEP)
     {
         this.serverEP = serverEP;
-        tunnelClient = Client.Rent(tunnelEP,8192+8);
+        tunnelClient = Client.Rent(tunnelEP, 8192 + 8);
         Log($"TunnelClient created for {tunnelEP}");
         tunnelClient.OnConnect += HandleOnTunnelConnected;
         tunnelClient.OnAfterClose += HandleOnTunnelClose;
@@ -73,7 +78,7 @@ public class TunnelClient
             return;
         }
         swapBuffer.Clear();
-        swapBuffer.Append(readBuffer.Data,readBuffer.ReadIndex,readBuffer.BytesToRead);
+        swapBuffer.Append(readBuffer.Data, readBuffer.ReadIndex, readBuffer.BytesToRead);
         readBuffer.Clear();
         var temp = readBuffer;
         readBuffer = swapBuffer;
@@ -134,13 +139,13 @@ public class TunnelClient
     void HandleOnTunnelConnectError(Client client, SocketError error)
     {
         LogError($"{client.Description} connect error: {error} ");
-        Task.Run(()=>TunnelRestart());
+        Task.Run(() => TunnelRestart());
     }
     void HandleOnTunnelClose(Client client)
     {
         if (readBuffer.BytesToRead > 0)
         {
-              LogError($"{client.Description} Closed with {readBuffer.BytesToRead} bytes left in the buffer");
+            LogError($"{client.Description} Closed with {readBuffer.BytesToRead} bytes left in the buffer");
         }
         readBuffer.Return();
         readBuffer = null;
@@ -191,7 +196,7 @@ public class TunnelClient
             sb.Write(client.SessionID);
             sb.Append(buffer, offset, size);
             sb.SetReadIndex(0);
-            tunnelClient.Send(sb.Data, 0, size+8);
+            tunnelClient.Send(sb.Data, 0, size + 8);
             return;
         }
         LogError($"{client.Description} is not connected, but recieved {size} bytes");

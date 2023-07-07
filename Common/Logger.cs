@@ -61,7 +61,7 @@ public sealed class Logger : ILogger
         switch(logLevel)
         {
             case LogLevel.Trace: return false;
-            case LogLevel.Debug: return false;
+            case LogLevel.Debug: return true;
             case LogLevel.Information: return true;
             case LogLevel.Warning: return true;
             case LogLevel.Error: return true;

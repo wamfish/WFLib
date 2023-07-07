@@ -13,7 +13,7 @@ public static class RecordFactory<R> where R : Record, new()
             return pool.Count;
         }
     }
-    static readonly PoolStats stats = new(typeof(R).Name, PoolCount);
+    static readonly PoolStats stats = new($"Record: {typeof(R).Name}", PoolCount);
     public static R Rent()
     {
         lock (pool)

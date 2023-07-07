@@ -36,7 +36,7 @@ public static class RecordContextFactory<R> where R : Record, new()
             return pool.Count;
         }
     }
-    public static readonly PoolStats stats = new(typeof(R).Name, PoolCount);
+    public static readonly PoolStats stats = new($"RecordContext<{typeof(R).Name}>", PoolCount);
     public static RecordContext<R> Rent(int EditByID=-2)
     {
         lock (pool)

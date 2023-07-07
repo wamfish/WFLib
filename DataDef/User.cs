@@ -2,7 +2,7 @@
 //  You may use, distribute and modify this code under the terms of the MIT license.
 //  See the file License.txt in the root folder for full license details.
 namespace WFLib;
-public enum UserRole { Guest, User, Admin, EditUser}
+public enum UserRole { Guest, User, Admin, EditUser, Developer}
 public partial class RolesData : Data
 {
     public UserRole Role;

@@ -7,23 +7,23 @@
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 	</PropertyGroup>
 	<ItemGroup>
-		<ProjectReference Include="..\WFCodeGenLib\WFCodeGenLib.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
+		<ProjectReference Include="..\WFCodeGenLib\WFCodeGenLib.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 	</ItemGroup>
 	
 	<ItemGroup>
-		<PackageReference Include="Godot.SourceGenerators" Version="4.0.2" />
-		<PackageReference Include="GodotSharp" Version="4.0.2" />
-		<PackageReference Include="Microsoft.Extensions.Identity.Core" Version="7.0.4" />
+		<PackageReference Include="Godot.SourceGenerators" Version="4.1.0" />
+		<PackageReference Include="GodotSharp" Version="4.1.0" />
+		<PackageReference Include="Microsoft.Extensions.Identity.Core" Version="7.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="SharpZipLib" Version="1.4.2" />
-		<PackageReference Include="SkiaSharp" Version="2.88.3" />
-		<PackageReference Include="SkiaSharp.Extended" Version="1.60.0" />
-		<PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="2.88.3" />
-		<PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="2.88.3" />
-		<PackageReference Include="HarfBuzzSharp.NativeAssets.Linux" Version="2.8.2.3" />
-		<PackageReference Include="Svg.Skia" Version="0.6.0-preview6" />
+		<PackageReference Include="SkiaSharp" Version="2.88.4-preview.84" />
+		<PackageReference Include="SkiaSharp.Extended" Version="2.0.0-preview.61" />
+		<PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="2.88.4-preview.84" />
+		<PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="2.88.4-preview.84" />
+		<PackageReference Include="HarfBuzzSharp.NativeAssets.Linux" Version="2.8.2.4-preview.84" />
+		<PackageReference Include="Svg.Skia" Version="1.0.0" />
 	</ItemGroup>
 	
 </Project>

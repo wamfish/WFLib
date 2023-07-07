@@ -15,6 +15,7 @@ public class TunnelServer
     {
         List<IPAddress> valid = new List<IPAddress>();
         valid.Add(remoteAddress);
+        valid.Add(IPAddress.Loopback);
         tunnelServer = new NetworkServer("ts:",tunnelEP,8192+8,valid);
         tunnelServer.HandleConnection += TunnelConnected;
         webBrowserServer = new NetworkServer("wbs:",webBrowserEP,8192);

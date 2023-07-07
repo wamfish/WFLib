@@ -2,7 +2,7 @@
 
 public class RecordProvider<R> : IDataProvider<R> where R : Record, new()
 {
-    public RecordContext<R> Ctx { get; private set; } = RecordContextFactory<R>.Rent();
+    public RecordContext<R> Ctx { get; private set; }
     private RecordProvider() 
     { 
     }
@@ -81,6 +81,7 @@ public class RecordProvider<R> : IDataProvider<R> where R : Record, new()
     }
     public void Dispose()
     {
+        if (Ctx == null) return;
         Ctx.Dispose();
         Ctx = null;
         pool.Return(this);

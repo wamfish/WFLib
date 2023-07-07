@@ -34,7 +34,10 @@ public class Pool<T>
     public Pool(Func<T> newObjFuncArg)
     {
         newObjFunc = newObjFuncArg;
-        stats = new(typeof(T).Name, () => { return pool.Count; });
+        var t = typeof(T);
+        string name = t.GetFriendlyName();
+        Console.WriteLine($"Pool<{name}> created");
+        stats = new(name, () => { return pool.Count; });
     }
     Queue<T> pool = new();
     /// <summary>
@@ -93,56 +96,4 @@ public class Pool<T>
             pool.Clear();
         }
     }
-}
-
-public class PoolStats
-{
-    static List<PoolStats> stats = new();
-    private static List<string> StatsList(string lineSep)
-    {
-        List<string> statsList = new();
-        lock (stats)
-        {
-            foreach (var s in stats)
-            {
-                statsList.Add(s.BuildStats(lineSep));
-            }
-        }
-        return statsList;
-    }
-    public static List<string> AllStats => StatsList("");
-    public static List<string> AllHtmlStats => StatsList("<br/>");
-    public string Stats => BuildStats("");
-    public string HtmlStats => BuildStats("<br/>");
-    private string BuildStats(string lineSep)
-    {
-        var sb = StringBuilderPool.Rent();
-        sb.AppendLine($"{Name} Stats:{lineSep}");
-        if (PoolCount != null)
-        {
-            sb.AppendLine($"Pool Count: {PoolCount()}{lineSep}");
-        }
-        sb.AppendLine($"Rent Count: {RentCount}{lineSep}");
-        sb.AppendLine($"Rent From Pool: {RentFromPoolCount}{lineSep}");
-        sb.AppendLine($"Rent From New: {RentFromNewCount}{lineSep}");
-        sb.AppendLine($"Return count: {ReturnCount}{lineSep}");
-        var r = sb.ToString();
-        StringBuilderPool.Return(sb);
-        return r;
-    }
-    public readonly string Name;
-    public readonly Func<int> PoolCount;
-    public PoolStats(string name, Func<int> poolCount)
-    {
-        Name = name;
-        PoolCount = poolCount;
-        lock (stats)
-        {
-            stats.Add(this);
-        }
-    }
-    public long RentCount = 0;
-    public long RentFromPoolCount = 0;
-    public long RentFromNewCount = 0;
-    public long ReturnCount = 0;
 }

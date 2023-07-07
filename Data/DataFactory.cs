@@ -14,7 +14,7 @@ public static class DataFactory<D> where D : Data, new()
             return pool.Count;
         }
     }
-    static readonly PoolStats stats = new(typeof(D).Name, PoolCount);
+    static readonly PoolStats stats = new($"Data: {typeof(D).Name}", PoolCount);
     public static D Rent()
     {
         D data;
