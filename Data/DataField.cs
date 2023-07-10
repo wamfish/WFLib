@@ -90,7 +90,7 @@ public abstract class DataField<D> : IDataField where D : Data, new()
             _currentIndex = dataList.Count - 1;
         }
     }
-    
+
     /// <summary>
     /// Create a new data and add it to the list
     /// </summary>
@@ -200,22 +200,39 @@ public abstract class DataField<D> : IDataField where D : Data, new()
     }
     public void Init()
     {
-        for (int i = 0; i < dataList.Count; i++)
+        for (int i = 1; i < dataList.Count; i++)
         {
             DataFactory<D>.Return(dataList[i]);
         }
-        dataList.Clear();
-        Create(); // we always have at least one
+        if (dataList.Count == 0)
+        {
+            Create();
+            OnInit?.Invoke(); //allow for overrides
+            return;
+        }
+        if (dataList.Count > 1)
+        {
+            dataList.RemoveRange(1, dataList.Count - 1);
+        }
+        dataList[0].Init();
         OnInit?.Invoke(); //allow for overrides
     }
     public void Clear()
     {
-        for (int i = 0; i < dataList.Count; i++)
+        for (int i = 1; i < dataList.Count; i++)
         {
             DataFactory<D>.Return(dataList[i]);
         }
-        dataList.Clear();
-        Create(); // we always have at least one
+        if (dataList.Count == 0)
+        {
+            Create();
+            return;
+        }
+        if (dataList.Count > 1)
+        {
+            dataList.RemoveRange(1, dataList.Count - 1);
+        }
+        dataList[0].Clear();
     }
     public void WriteToBuf(SerializationBuffer sb)
     {
@@ -243,6 +260,10 @@ public abstract class DataField<D> : IDataField where D : Data, new()
             {
                 var d = DataFactory<D>.Rent();
                 d.ReadFromBuf(sb2);
+                if (count > 2)
+                {
+                    Console.WriteLine("ReadFromBuf: " + d.ToString());
+                }
                 dataList.Add(d);
             }
             sb2.Clear();

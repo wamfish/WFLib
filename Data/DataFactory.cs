@@ -18,6 +18,7 @@ public static class DataFactory<D> where D : Data, new()
     public static D Rent()
     {
         D data;
+      
         lock (pool)
         {
             stats.RentCount++;

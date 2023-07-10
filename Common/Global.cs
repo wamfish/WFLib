@@ -13,7 +13,6 @@ public enum COLORRANGE
 }
 public static partial class Global
 {
-    
     public static readonly bool IsWebAssembly = System.Runtime.InteropServices.RuntimeInformation.RuntimeIdentifier.Contains("wasm");
 
     public static LogLevel GlobalLogLevel = LogLevel.Information;
